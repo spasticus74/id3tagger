@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -18,7 +19,7 @@ func main() {
 
 	flag.Parse()
 
-	// clean up the path we've receieved because we need to be able to
+	// Clean up the path we've receieved because we need to be able to
 	// do some reliable parsing later if it's valid
 	dirPath, _ = filepath.Abs(*dirPtr)
 	dirPath = filepath.Clean(dirPath)
@@ -34,6 +35,12 @@ func main() {
 	mp3s, e := GetMP3sInDir(*dirPtr)
 	if e != nil {
 		fmt.Printf("A fatal error has occurred: %s", e)
+	}
+
+	// Stop if there's no files to process
+	if len(mp3s) < 1 {
+		fmt.Printf("No mp3s were found in the given path '%s'\n", dirPath)
+		os.Exit(1)
 	}
 
 	// Parse out the artist and album names from the path
@@ -52,6 +59,13 @@ func main() {
 
 	for _, v := range mp3s {
 		fmt.Println(v)
+		trackNumber, trackName, err := ParseFilename(v)
+		if err != nil {
+			fmt.Printf("Skipping '%s': %s\n", v, err)
+		} else {
+			fmt.Printf("found '%d' '%s'\n\n", trackNumber, trackName)
+		}
+
 	}
 }
 
@@ -159,4 +173,19 @@ func GetMP3sInDir(dirPath string) ([]string, error) {
 	}
 
 	return ret, nil
+}
+
+func ParseFilename(filename string) (int, string, error) {
+	re := regexp.MustCompile(`(\d*) (.*).mp3`)
+	matches := re.FindAllStringSubmatch(filename, -1)
+	if len(matches) == 0 {
+		return -1, "", errors.New("unable to parse filename")
+	}
+
+	n, err := strconv.Atoi(matches[0][1])
+	if err != nil {
+		return -1, "", errors.New("unable to parse filename")
+	}
+
+	return n, matches[0][2], nil
 }
