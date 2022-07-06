@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	id3 "github.com/mikkyang/id3-go"
 )
 
 var dirPath string
@@ -55,7 +57,7 @@ func main() {
 	}
 	albumGenre := GenrePrompt()
 
-	fmt.Printf("Using artist '%s', album '%s', year '%d', genre '%s'\n", artistName, albumName, albumYear, albumGenre)
+	fmt.Printf("Using artist '%s', album '%s', year '%s', genre '%s'\n", artistName, albumName, albumYear, albumGenre)
 
 	for _, v := range mp3s {
 		fmt.Println(v)
@@ -63,10 +65,35 @@ func main() {
 		if err != nil {
 			fmt.Printf("Skipping '%s': %s\n", v, err)
 		} else {
-			fmt.Printf("found '%d' '%s'\n\n", trackNumber, trackName)
+			fmt.Printf("found '%s' '%s'\n\n", trackNumber, trackName)
+			Tag(v, artistName, trackName, albumName, albumYear, albumGenre, trackNumber)
 		}
 
 	}
+}
+
+func Tag(mp3Filepath, artist, title, album, year, genre, track string) error {
+	mp3File, err := id3.Open(mp3Filepath)
+
+	if err != nil {
+		return err
+	}
+	defer mp3File.Close()
+
+	mp3File.SetArtist(artist)
+	mp3File.SetTitle(title)
+	mp3File.SetAlbum(album)
+	mp3File.SetYear(year)
+	mp3File.SetGenre(genre)
+
+	// testing
+	fmt.Println(mp3File.Artist())
+	fmt.Println(mp3File.Title())
+	fmt.Println(mp3File.Album())
+	fmt.Println(mp3File.Year())
+	fmt.Println(mp3File.Genre())
+
+	return nil
 }
 
 func GenrePrompt() string {
@@ -84,7 +111,7 @@ func GenrePrompt() string {
 	return ret
 }
 
-func YearPrompt() (int, error) {
+func YearPrompt() (string, error) {
 	var s string
 	r := bufio.NewReader(os.Stdin)
 	for {
@@ -97,13 +124,13 @@ func YearPrompt() (int, error) {
 
 	ret := strings.TrimSpace(s)
 	if strings.ToUpper(ret) == "" {
-		return -1, nil
+		return "-1", nil
 	} else {
-		a, e := strconv.Atoi(ret)
+		_, e := strconv.Atoi(ret)
 		if e != nil {
-			return -1, e
+			return "-1", e
 		}
-		return a, nil
+		return ret, nil
 	}
 }
 
@@ -175,17 +202,17 @@ func GetMP3sInDir(dirPath string) ([]string, error) {
 	return ret, nil
 }
 
-func ParseFilename(filename string) (int, string, error) {
+func ParseFilename(filename string) (string, string, error) {
 	re := regexp.MustCompile(`(\d*) (.*).mp3`)
 	matches := re.FindAllStringSubmatch(filename, -1)
 	if len(matches) == 0 {
-		return -1, "", errors.New("unable to parse filename")
+		return "-1", "", errors.New("unable to parse filename")
 	}
 
 	n, err := strconv.Atoi(matches[0][1])
 	if err != nil {
-		return -1, "", errors.New("unable to parse filename")
+		return "-1", "", errors.New("unable to parse filename")
 	}
 
-	return n, matches[0][2], nil
+	return strconv.Itoa(n), matches[0][2], nil
 }
