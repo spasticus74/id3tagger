@@ -32,14 +32,14 @@ func ProcessAlbum(dirPath, year, genre string) {
 	albumName = cli.NamePrompt("Found Album name:", albumName)
 
 	// If we haven't already entered Year and Genre prompt for them now
-	if year != "" {
+	if year == "" {
 		year, err = cli.YearPrompt()
 		if err != nil {
 			fmt.Printf("Unable to parse an integer: %s\n", err)
 		}
 	}
 
-	if genre != "" {
+	if genre == "" {
 		genre = cli.GenrePrompt()
 	}
 
