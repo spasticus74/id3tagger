@@ -37,3 +37,17 @@ func Tag(mp3Filepath, artist, title, album, year, genre, track string) error {
 
 	return nil
 }
+
+func Inspect(mp3Filepath string) error {
+	mp3File, err := id3.Open(mp3Filepath)
+
+	if err != nil {
+		return err
+	}
+	defer mp3File.Close()
+
+	f := mp3File.AllFrames()
+	fmt.Printf("Found %d frames in %s\n", len(f), mp3Filepath)
+
+	return nil
+}

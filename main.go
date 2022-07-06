@@ -14,6 +14,7 @@ func main() {
 	dirPtr := flag.String("p", ".", "path to the album directory")
 	yearPtr := flag.String("y", "", "year of release")
 	genrePtr := flag.String("g", "", "album genre")
+	inspPtr := flag.Bool("i", false, "inspect the existing tags")
 
 	flag.Parse()
 
@@ -33,6 +34,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Process the dir
-	engine.ProcessAlbum(dirPath, albumYear, albumGenre)
+	if *inspPtr {
+		// Report the number of frames in each file
+		engine.InspectAlbum(dirPath)
+	} else {
+		// Process the dir
+		engine.ProcessAlbum(dirPath, albumYear, albumGenre)
+	}
 }

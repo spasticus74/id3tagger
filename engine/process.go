@@ -11,6 +11,24 @@ import (
 	"github.com/spasticus74/id3tagger/parse"
 )
 
+func InspectAlbum(dirPath string) {
+	// Pull out the name of all mp3 files in the dir
+	mp3s, err := fileops.GetMP3sInDir(dirPath)
+	if err != nil {
+		fmt.Printf("A fatal error has occurred: %s", err)
+	}
+
+	// Stop if there's no files to process
+	if len(mp3s) < 1 {
+		fmt.Printf("No mp3s were found in the given path '%s'\n", dirPath)
+		os.Exit(1)
+	}
+
+	for _, v := range mp3s {
+		Inspect(dirPath + "/" + v)
+	}
+}
+
 func ProcessAlbum(dirPath, year, genre string) {
 	// Pull out the name of all mp3 files in the dir
 	mp3s, err := fileops.GetMP3sInDir(dirPath)
