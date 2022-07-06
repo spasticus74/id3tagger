@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	id3 "github.com/mikkyang/id3-go"
+	"github.com/mikkyang/id3-go/v2"
 )
 
 var dirPath string
@@ -57,16 +58,18 @@ func main() {
 	}
 	albumGenre := GenrePrompt()
 
-	fmt.Printf("Using artist '%s', album '%s', year '%s', genre '%s'\n", artistName, albumName, albumYear, albumGenre)
+	fmt.Printf("Using Artist: '%s', Album: '%s', Year: '%s', Genre: '%s'\n", artistName, albumName, albumYear, albumGenre)
 
 	for _, v := range mp3s {
-		fmt.Println(v)
 		trackNumber, trackName, err := ParseFilename(v)
 		if err != nil {
 			fmt.Printf("Skipping '%s': %s\n", v, err)
 		} else {
-			fmt.Printf("found '%s' '%s'\n\n", trackNumber, trackName)
-			Tag(v, artistName, trackName, albumName, albumYear, albumGenre, trackNumber)
+			fmt.Printf("Processing '%s':\t#:'%s', T:'%s'\n", v, trackNumber, trackName)
+			err := Tag(dirPath + "/" + v, artistName, trackName, albumName, albumYear, albumGenre, trackNumber)
+			if err != nil {
+				fmt.Printf("An error occured in tagging '%s': '%s'. Continuing ...\n", v, err)
+			}
 		}
 
 	}
@@ -80,18 +83,25 @@ func Tag(mp3Filepath, artist, title, album, year, genre, track string) error {
 	}
 	defer mp3File.Close()
 
+	tag := mp3File.Tagger
+	if tag == nil {
+		fmt.Println("error: no tag added to file")
+	}
 	mp3File.SetArtist(artist)
 	mp3File.SetTitle(title)
 	mp3File.SetAlbum(album)
 	mp3File.SetYear(year)
 	mp3File.SetGenre(genre)
 
-	// testing
-	fmt.Println(mp3File.Artist())
-	fmt.Println(mp3File.Title())
-	fmt.Println(mp3File.Album())
-	fmt.Println(mp3File.Year())
-	fmt.Println(mp3File.Genre())
+	// track number
+	ft := v2.V23FrameTypeMap["TRCK"]
+	textFrame := v2.NewTextFrame(ft, track)
+	mp3File.AddFrames(textFrame)
+
+	err = mp3File.Close()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -187,7 +197,7 @@ func GetMP3sInDir(dirPath string) ([]string, error) {
 	// read the dir
 	files, err := theDir.Readdir(0)
 	if err != nil {
-		fmt.Println(err)
+		//fmt.Println(err)
 		return nil, err
 	}
 
