@@ -25,8 +25,7 @@ func Tag(mp3Filepath, artist, title, album, year, genre, track string) error {
 	mp3File.SetYear(year)
 	mp3File.SetGenre(genre)
 
-	// Add track number
-	// First remove any already existing TRCK tags
+	// Remove any already existing TRCK tags
 	trcks := mp3File.Frames("TRCK")
 	if len(trcks) > 0 {
 		mp3File.DeleteFrames("TRCK")
@@ -56,7 +55,7 @@ func Inspect(mp3Filepath string) error {
 	fmt.Printf("Found %d frames in %s\n", len(f), mp3Filepath)
 
 	for c, v := range f {
-		fmt.Printf("%d: %s\n", c+1, v.Id())
+		fmt.Printf("%d: %s: %s\n", c+1, v.Id(), v.String())
 	}
 	fmt.Println()
 
